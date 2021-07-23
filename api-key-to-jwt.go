@@ -11,7 +11,6 @@ import (
 
 const (
 	authorizationHeader = "Authorization"
-	apikey = "APIKey"
 )
 
 // User struct
@@ -29,10 +28,16 @@ func ApiKeyToJwt(w http.ResponseWriter, r *http.Request) {
 	// Lookup user details from developer metadata
 	var user User
 	session := ctx.GetSession(r)
-	//var tykUserFields = session.MetaData["tyk_user_fields"].(string)
+
 	var tykUserFields = session.MetaData["tyk_user_fields"]
-	userFieldsStr, _ := json.Marshal(tykUserFields)
-	json.Unmarshal([]byte(userFieldsStr), &user)
+	userFieldsStr, err := json.Marshal(tykUserFields)
+	logger.Info("tyk_user_fields= ", userFieldsStr)
+
+	err = json.Unmarshal([]byte(userFieldsStr), &user)
+	if len(user.Name) == 0 || len(user.Username) == 0 {
+		writeError(w, "Developer Identity metadata not set")
+		return
+	}
 
 	logger.Info("Developer Username: ", user.Username)
 	logger.Info("Developer Name: ", user.Name)
@@ -63,11 +68,11 @@ func ApiKeyToJwt(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set(authorizationHeader, signedToken)
 }
 
-func returnNoAuth(w http.ResponseWriter, errorMessage string) {
+func writeError(w http.ResponseWriter, errorMessage string) {
+	w.WriteHeader(http.StatusInternalServerError)
 	jsonData, err := json.Marshal(errorMessage)
 	if err != nil {
 		logger.Info("Couldn't marshal")
-		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	_, _ = w.Write(jsonData)
