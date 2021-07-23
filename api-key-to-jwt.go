@@ -33,7 +33,7 @@ func ApiKeyToJwt(w http.ResponseWriter, r *http.Request) {
 	userFieldsStr, err := json.Marshal(tykUserFields)
 	logger.Info("tyk_user_fields= ", userFieldsStr)
 
-	err = json.Unmarshal([]byte(userFieldsStr), &user)
+	json.Unmarshal([]byte(userFieldsStr), &user)
 	if len(user.Name) == 0 || len(user.Username) == 0 {
 		writeError(w, "Developer Identity metadata not set")
 		return
