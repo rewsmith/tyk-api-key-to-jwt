@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/TykTechnologies/tyk/ctx"
+	"github.com/TykTechnologies/tyk/log"
 	jwt "github.com/dgrijalva/jwt-go"
-	"log"
 	"net/http"
 )
 
@@ -20,18 +20,22 @@ type User struct {
 	Name     string `json:"name"`
 }
 
+var logger = log.Get()
 
 // ApiKeyToJwt creates a signed JWT from an APIKey
 func ApiKeyToJwt(w http.ResponseWriter, r *http.Request) {
-	log.Println("ApiKeyToJwt main starting")
+	logger.Info("ApiKeyToJwt main starting")
 
 	// Lookup user details from developer metadata
 	var user User
 	session := ctx.GetSession(r)
-	user.Username = session.MetaData["tyk_developer_username"].(string)
-	user.Name = session.MetaData["tyk_developer_name"].(string)
-	log.Println("Developer Username: ", user.Username)
-	log.Println("Developer Name: ", user.Name)
+	//var tykUserFields = session.MetaData["tyk_user_fields"].(string)
+	var tykUserFields = session.MetaData["tyk_user_fields"]
+	userFieldsStr, _ := json.Marshal(tykUserFields)
+	json.Unmarshal([]byte(userFieldsStr), &user)
+
+	logger.Info("Developer Username: ", user.Username)
+	logger.Info("Developer Name: ", user.Name)
 
 	// Now create the JWT
 	mySigningKey := []byte("my-256-bit-secret")
@@ -62,7 +66,7 @@ func ApiKeyToJwt(w http.ResponseWriter, r *http.Request) {
 func returnNoAuth(w http.ResponseWriter, errorMessage string) {
 	jsonData, err := json.Marshal(errorMessage)
 	if err != nil {
-		log.Println("Couldn't marshal")
+		logger.Info("Couldn't marshal")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -72,7 +76,7 @@ func returnNoAuth(w http.ResponseWriter, errorMessage string) {
 
 // Run on startup by Tyk when loaded.  Bootstrapping the service here
 func init() {
-	log.Println("log ApiKeyToJwt init")
+	logger.Info("log ApiKeyToJwt init")
 }
 
 func main() {}

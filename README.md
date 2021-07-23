@@ -2,7 +2,7 @@
 
 Built to be run natively as a package by Tyk Gateways.
 
-This plugin is intended to run as the "post-auth" part of the request lifecycle.
+This plugin is intended to run as the "post" part of the request lifecycle.
 
 The plugin will create a JWT with the subject set to the subject on the developer profile metadata, and let the request continue. Otherwise it will return an error.
 
@@ -27,12 +27,9 @@ in API Designer, click on "Raw API Definition"
 	"post": [
 		{
 			"name": "ApiKeyToJwt",
-			"path": "/opt/tyk-gateway/api-key-to-jwt.so",
-			"require_session": false,
-			"raw_body_only": false
+			"path": "/opt/tyk-gateway/api-key-to-jwt.so"
 		}
 	],
 ```
 "name" has to be the name of the GO function
-
 "path" is wherever you put the binary generated previously
