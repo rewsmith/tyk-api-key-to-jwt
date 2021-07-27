@@ -4,7 +4,7 @@ Built to be run natively as a package by Tyk Gateways.
 
 This plugin is intended to run as the "post" part of the request lifecycle.
 
-The plugin will create a JWT with the subject set to the subject on the developer profile metadata, and let the request continue. Otherwise it will return an error.
+The plugin will create a JWT with the subject set to the subject on the developer profile, and let the request continue. Otherwise it will return an error.
 
 # Build the plugin binary (shared object) without using go
 `docker run --rm  -v `pwd`:/plugin-source tykio/tyk-plugin-compiler:v3.1.2 api-key-to-jwt.so`

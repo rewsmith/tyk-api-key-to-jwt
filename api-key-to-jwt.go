@@ -14,10 +14,10 @@ const (
 )
 
 // User struct
-type User struct {
+/*type User struct {
 	Username string `json:"username"`
 	Name     string `json:"name"`
-}
+}*/
 
 var logger = log.Get()
 
@@ -25,40 +25,53 @@ var logger = log.Get()
 func ApiKeyToJwt(w http.ResponseWriter, r *http.Request) {
 	logger.Info("ApiKeyToJwt main starting")
 
-	// Lookup user details from developer metadata
-	var user User
+	// Lookup user details from developer profile
 	session := ctx.GetSession(r)
 
-	var tykUserFields = session.MetaData["tyk_user_fields"]
-	userFieldsStr, err := json.Marshal(tykUserFields)
-	logger.Info("tyk_user_fields= ", userFieldsStr)
+	/*	var user User
+		var tykUserFields = session.MetaData["tyk_user_fields"]
+		userFieldsStr, err := json.Marshal(tykUserFields)
+		logger.Info("tyk_user_fields= ", userFieldsStr)
 
-	json.Unmarshal([]byte(userFieldsStr), &user)
-	if len(user.Name) == 0 || len(user.Username) == 0 {
-		writeError(w, "Developer Identity metadata not set")
+		json.Unmarshal([]byte(userFieldsStr), &user)
+		if len(user.Name) == 0 || len(user.Username) == 0 {
+			writeError(w, "Developer Identity metadata not set")
+			return
+		}
+
+		logger.Info("Developer Username: ", user.Username)
+		logger.Info("Developer Name: ", user.Name)
+
+		// Create the JWT Claims
+		type MyCustomClaims struct {
+			Name string `json:"name"`
+			jwt.StandardClaims
+		}
+
+		claims := MyCustomClaims{
+			user.Name,
+			jwt.StandardClaims{
+				Subject:   user.Username,
+				ExpiresAt: 15000,
+				Issuer:    "Tyk",
+			},
+		}
+	*/
+
+	var alias = session.Alias
+	logger.Info("alias= ", alias)
+	if len(alias) == 0 {
+		writeError(w, "Session key alias not set")
 		return
 	}
 
-	logger.Info("Developer Username: ", user.Username)
-	logger.Info("Developer Name: ", user.Name)
+	claims := jwt.StandardClaims{
+		Subject:   alias,
+		ExpiresAt: 15000,
+		Issuer:    "Tyk",
+	}
 
-	// Now create the JWT
 	mySigningKey := []byte("my-256-bit-secret")
-
-	type MyCustomClaims struct {
-		Name string `json:"name"`
-		jwt.StandardClaims
-	}
-
-	// Create the Claims
-	claims := MyCustomClaims{
-		user.Name,
-		jwt.StandardClaims{
-			Subject:   user.Username,
-			ExpiresAt: 15000,
-			Issuer:    "Tyk",
-		},
-	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(mySigningKey)
